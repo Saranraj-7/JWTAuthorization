@@ -4,10 +4,11 @@ import java.util.HashMap;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
-
 import com.example.demo.Dto.JwtAuthenticationResponse;
 import com.example.demo.Dto.RefreshTokenRequest;
 import com.example.demo.Dto.SignInRequest;
@@ -15,7 +16,6 @@ import com.example.demo.Dto.SignUpRequest;
 import com.example.demo.Entity.User;
 import com.example.demo.Repository.UserRepository;
 import com.example.demo.Utils.Role;
-
 import lombok.RequiredArgsConstructor;
 
 @Service
@@ -40,13 +40,18 @@ public class AuthenticationServiceImpl {
 	}
 
 	public JwtAuthenticationResponse signIn(SignInRequest signInRequest) {
-		authenticationManager.authenticate(
-				new UsernamePasswordAuthenticationToken(signInRequest.getEmail(), signInRequest.getPassword()));
+		try {
+			authenticationManager.authenticate(
+					new UsernamePasswordAuthenticationToken(signInRequest.getEmail(), signInRequest.getPassword()));
+		} catch (BadCredentialsException e) {
+			throw new IllegalArgumentException("Incorrect email or password");
+		}
 
-		var user = userRepository.findByEmail(signInRequest.getEmail())
-				.orElseThrow(() -> new IllegalArgumentException("Invalid Email id"));
-		var jwt = jwtService.generateToken(user);
-		var refreshToken = jwtService.generateRefreshToken(new HashMap<>(), user);
+		User user = userRepository.findByEmail(signInRequest.getEmail()).orElseThrow(
+				() -> new UsernameNotFoundException("User not found with email: " + signInRequest.getEmail()));
+
+		String jwt = jwtService.generateToken(user);
+		String refreshToken = jwtService.generateRefreshToken(new HashMap<>(), user);
 
 		JwtAuthenticationResponse jwtAuthenticationResponse = new JwtAuthenticationResponse();
 		jwtAuthenticationResponse.setToken(jwt);

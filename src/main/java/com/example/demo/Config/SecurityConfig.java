@@ -18,7 +18,6 @@ import org.springframework.security.web.authentication.UsernamePasswordAuthentic
 
 import com.example.demo.Service.UserServiceImpl;
 import com.example.demo.Utils.Role;
-
 import lombok.RequiredArgsConstructor;
 
 @Configuration
@@ -26,8 +25,10 @@ import lombok.RequiredArgsConstructor;
 @RequiredArgsConstructor
 public class SecurityConfig {
 
+
 	@Autowired
 	JwtAuthenticationFilter jwtAuthenticationFilter;
+
 	@Autowired
 	UserServiceImpl userService;
 

@@ -2,12 +2,13 @@ package com.example.demo.Controller;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.CrossOrigin;
+import org.springframework.security.core.userdetails.UsernameNotFoundException;
+import org.springframework.util.StringUtils;
+import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
-
 import com.example.demo.Dto.JwtAuthenticationResponse;
 import com.example.demo.Dto.RefreshTokenRequest;
 import com.example.demo.Dto.SignInRequest;
@@ -15,12 +16,9 @@ import com.example.demo.Dto.SignUpRequest;
 import com.example.demo.Entity.User;
 import com.example.demo.Service.AuthenticationServiceImpl;
 
-import lombok.RequiredArgsConstructor;
-
 @RestController
 @RequestMapping("api/v1/auth")
-@CrossOrigin(origins = "http://localhost:3000/")
-@RequiredArgsConstructor
+
 public class AuthenticationController {
 
 	@Autowired
@@ -37,13 +35,28 @@ public class AuthenticationController {
 	}
 
 	@PostMapping("/login")
-	public ResponseEntity<JwtAuthenticationResponse> login(@RequestBody SignInRequest signInRequest) {
-		return ResponseEntity.ok(authenticationService.signIn(signInRequest));
+	public ResponseEntity<?> login(@RequestBody SignInRequest signInRequest) {
+		if (!StringUtils.hasText(signInRequest.getEmail())) {
+			return ResponseEntity.badRequest().body("Enter email id");
 		}
+		if (!StringUtils.hasText(signInRequest.getPassword())) {
+			return ResponseEntity.badRequest().body("Enter Password");
+		}
+		try {
+			return ResponseEntity.ok(authenticationService.signIn(signInRequest));
+		} catch (IllegalArgumentException | UsernameNotFoundException e) {
+			return ResponseEntity.badRequest().body(e.getMessage());
+		}
+	}
 
 	@PostMapping("/refresh")
 	public ResponseEntity<JwtAuthenticationResponse> refresh(@RequestBody RefreshTokenRequest refreshTokenRequest) {
 		return ResponseEntity.ok(authenticationService.refreshToken(refreshTokenRequest));
+	}
+
+	@ExceptionHandler({ IllegalArgumentException.class, UsernameNotFoundException.class })
+	public ResponseEntity<String> handleAuthenticationException(Exception e) {
+		return ResponseEntity.badRequest().body(e.getMessage());
 	}
 
 }

@@ -12,8 +12,8 @@ import lombok.RequiredArgsConstructor;
 @RequiredArgsConstructor
 public class AdminController {
 
-    @GetMapping
-    public ResponseEntity<String> hello(){
-        return ResponseEntity.ok("Admin logged In");
-    }
+	@GetMapping
+	public ResponseEntity<String> hello() {
+		return ResponseEntity.ok("Admin logged In");
+	}
 }
